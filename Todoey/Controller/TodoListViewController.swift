@@ -8,8 +8,9 @@
 
 import UIKit
 import RealmSwift
+import ChameleonFramework
 
-class TodoListViewController: UITableViewController {
+class TodoListViewController: SwipeTableViewController {
     
     let realm = try! Realm()
     
@@ -26,7 +27,7 @@ class TodoListViewController: UITableViewController {
         super.viewDidLoad()
         
         print(FileManager.default.urls(for: .documentDirectory, in: .userDomainMask))
-        
+       
         
     }
     
@@ -38,12 +39,12 @@ class TodoListViewController: UITableViewController {
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         
-        let cell = tableView.dequeueReusableCell(withIdentifier: "ToDoItemCell", for: indexPath)
+       let cell = super.tableView(tableView, cellForRowAt: indexPath)
         
         if let item = todoItems?[indexPath.row] {
         
             cell.textLabel?.text = item.title
-        
+            cell.backgroundColor = UIColor(hexString: item.color)
             //Ternary operator ==>
             // value = condition ? valueIfTrue : valueIfFalse
         
@@ -71,11 +72,27 @@ class TodoListViewController: UITableViewController {
             }
             
         }
+        
         tableView.reloadData()
         
         tableView.deselectRow(at: indexPath, animated: true)
         
     }
+    
+    override func updateModel(indexPath: IndexPath) {
+        
+        if let itemDeleted = todoItems?[indexPath.row] {
+            do {
+                try realm.write {
+                    realm.delete(itemDeleted)
+                }
+            } catch {
+            print("Item could not be deleted \(error).")
+            }
+        }
+    }
+    
+    
     
     //MARK: - Add New Items
     
@@ -97,6 +114,7 @@ class TodoListViewController: UITableViewController {
                         let newItem = Item()
                         newItem.title = textField.text!
                         newItem.dateCreated = Date()
+                        newItem.color = (UIColor.randomFlat()?.hexValue()!)!
                         currentCategory.items.append(newItem)
                     }
                 } catch {
@@ -131,6 +149,7 @@ class TodoListViewController: UITableViewController {
         tableView.reloadData()
 
     }
+    
 
 }
 
